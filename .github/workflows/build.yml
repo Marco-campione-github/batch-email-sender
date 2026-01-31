@@ -1,0 +1,105 @@
+name: Build Executables
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build Windows executable
+      run: |
+        pyinstaller --onefile --windowed --name batch-email-sender --icon=NONE main.py
+    
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: batch-email-sender-windows
+        path: dist/batch-email-sender.exe
+        retention-days: 30
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build macOS app
+      run: |
+        pyinstaller --onefile --windowed --name batch-email-sender --icon=NONE main.py
+    
+    - name: Create DMG (optional)
+      run: |
+        mkdir -p dist/dmg
+        cp -r dist/batch-email-sender.app dist/dmg/
+        hdiutil create -volname "Batch Email Sender" -srcfolder dist/dmg -ov -format UDZO dist/batch-email-sender.dmg
+    
+    - name: Upload macOS app artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: batch-email-sender-macos-app
+        path: dist/batch-email-sender.app
+        retention-days: 30
+    
+    - name: Upload macOS DMG artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: batch-email-sender-macos-dmg
+        path: dist/batch-email-sender.dmg
+        retention-days: 30
+
+  create-release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - name: Download Windows artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: batch-email-sender-windows
+        path: ./windows
+    
+    - name: Download macOS DMG artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: batch-email-sender-macos-dmg
+        path: ./macos
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          windows/batch-email-sender.exe
+          macos/batch-email-sender.dmg
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

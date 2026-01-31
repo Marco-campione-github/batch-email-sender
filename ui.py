@@ -1,12 +1,10 @@
 import tkinter as tk
-from tkinter import messagebox, scrolledtext, ttk
-from pathlib import Path
+from tkinter import messagebox, scrolledtext, ttk, filedialog
 import threading
+import shutil
 
-from auth import authenticate, is_authenticated, get_authenticated_user_email
+from auth import authenticate, is_authenticated, get_authenticated_user_email, TOKEN_FILE, credentials_file_exists, CREDENTIALS_FILE
 from email_service import send_email
-
-TOKEN_FILE = "token.pickle"
 
 
 class BulkMailerUI:
@@ -38,15 +36,94 @@ class BulkMailerUI:
             font=("Helvetica", 18)
         ).pack(pady=20)
 
+        # Check if credentials file already exists
+        if credentials_file_exists():
+            status_text = "✓ Credentials file loaded"
+            status_color = "green"
+        else:
+            status_text = "⚠ No credentials file found"
+            status_color = "orange"
+        
+        self.credentials_status = tk.Label(
+            self.auth_frame,
+            text=status_text,
+            font=("Helvetica", 10),
+            fg=status_color
+        )
+        self.credentials_status.pack(pady=5)
+
+        # Upload credentials button
         tk.Button(
+            self.auth_frame,
+            text="📁 Upload Credentials File",
+            width=30,
+            height=2,
+            command=self.upload_credentials
+        ).pack(pady=10)
+
+        # Authenticate button
+        self.auth_button = tk.Button(
             self.auth_frame,
             text="Authenticate Google",
             width=30,
             height=2,
-            command=self.handle_auth
-        ).pack()
+            command=self.handle_auth,
+            state="normal" if credentials_file_exists() else "disabled"
+        )
+        self.auth_button.pack()
+
+        # Instructions
+        tk.Label(
+            self.auth_frame,
+            text="First, upload your google-oauth-credentials.json file,\nthen click 'Authenticate Google'",
+            font=("Helvetica", 9),
+            fg="gray"
+        ).pack(pady=15)
+
+    def upload_credentials(self):
+        """Allow user to select and upload their credentials file."""
+        file_path = filedialog.askopenfilename(
+            title="Select Google OAuth Credentials File",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            initialfile="google-oauth-credentials.json"
+        )
+        
+        if not file_path:
+            return  # User cancelled
+        
+        try:
+            # Ensure the directory exists
+            CREDENTIALS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Copy the selected file to the app's data directory
+            shutil.copy2(file_path, CREDENTIALS_FILE)
+            
+            # Update UI
+            self.credentials_status.config(
+                text="✓ Credentials file loaded",
+                fg="green"
+            )
+            self.auth_button.config(state="normal")
+            
+            messagebox.showinfo(
+                "Success",
+                "Credentials file uploaded successfully!\nYou can now authenticate with Google."
+            )
+        except Exception as e:
+            messagebox.showerror(
+                "Upload Error",
+                f"Failed to upload credentials file:\n{str(e)}"
+            )
 
     def handle_auth(self):
+        # Check if credentials file exists (should always be true if button is enabled)
+        if not credentials_file_exists():
+            messagebox.showerror(
+                "Missing Credentials File",
+                "Please upload your google-oauth-credentials.json file first."
+            )
+            return
+        
         try:
             self.service = authenticate()
             messagebox.showinfo("Success", "Authenticated successfully!")
@@ -120,8 +197,8 @@ class BulkMailerUI:
         confirm = messagebox.askyesno("Logout", "Are you sure you want to logout?")
         if confirm:
             # Delete token
-            if Path(TOKEN_FILE).exists():
-                Path(TOKEN_FILE).unlink()
+            if TOKEN_FILE.exists():
+                TOKEN_FILE.unlink()
             self.service = None
             self.email_frame.destroy()
             self.init_auth_frame()

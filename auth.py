@@ -2,29 +2,35 @@ import pickle
 from pathlib import Path
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from utils import get_data_path
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
     "https://www.googleapis.com/auth/gmail.readonly"
 ]
-TOKEN_FILE = "token.pickle"
-CREDENTIALS_FILE = "google-oauth-credentials.json"
+TOKEN_FILE = get_data_path("token.pickle")
+CREDENTIALS_FILE = get_data_path("google-oauth-credentials.json")
+
+
+def credentials_file_exists() -> bool:
+    """Check if the credentials file exists."""
+    return CREDENTIALS_FILE.exists()
 
 
 def is_authenticated() -> bool:
-    return Path(TOKEN_FILE).exists()
+    return TOKEN_FILE.exists()
 
 
 def authenticate():
     creds = None
 
-    if Path(TOKEN_FILE).exists():
+    if TOKEN_FILE.exists():
         with open(TOKEN_FILE, "rb") as token:
             creds = pickle.load(token)
 
     if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file(
-            CREDENTIALS_FILE, SCOPES
+            str(CREDENTIALS_FILE), SCOPES
         )
         creds = flow.run_local_server(port=0)
 

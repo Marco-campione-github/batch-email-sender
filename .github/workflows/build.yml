@@ -28,7 +28,7 @@ jobs:
     
     - name: Build Windows executable
       run: |
-        pyinstaller --onefile --windowed --name batch-email-sender --icon=NONE main.py
+        pyinstaller --onefile --windowed --name batch-email-sender main.py
     
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
@@ -55,12 +55,16 @@ jobs:
     
     - name: Build macOS app
       run: |
-        pyinstaller --onefile --windowed --name batch-email-sender --icon=NONE main.py
+        pyinstaller --onedir --windowed --name batch-email-sender main.py
     
-    - name: Create DMG (optional)
+    - name: Create DMG
       run: |
+        # Create a temporary directory for DMG contents
         mkdir -p dist/dmg
-        cp -r dist/batch-email-sender.app dist/dmg/
+        cp -r "dist/batch-email-sender.app" dist/dmg/
+        # Create symbolic link to Applications folder
+        ln -s /Applications dist/dmg/Applications
+        # Create DMG
         hdiutil create -volname "Batch Email Sender" -srcfolder dist/dmg -ov -format UDZO dist/batch-email-sender.dmg
     
     - name: Upload macOS app artifact

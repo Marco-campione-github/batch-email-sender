@@ -16,10 +16,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - run: python -m venv .venv
-      - run: .venv\Scripts\activate && pip install --upgrade pip
-      - run: .venv\Scripts\activate && pip install -r requirements.txt pyinstaller
-      - run: .venv\Scripts\activate && pyinstaller --onefile --windowed --name "BatchEmailSender" main.py
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pyinstaller --onefile --windowed --name "BatchEmailSender" main.py
       - uses: actions/upload-artifact@v4
         with:
           name: BatchEmailSender-Windows
@@ -32,10 +30,8 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.12'
-      - run: python3 -m venv .venv
-      - run: source .venv/bin/activate && pip install --upgrade pip
-      - run: source .venv/bin/activate && pip install -r requirements.txt pyinstaller
-      - run: source .venv/bin/activate && pyinstaller --onedir --windowed --name "BatchEmailSender" main.py
+      - run: pip install -r requirements.txt pyinstaller
+      - run: pyinstaller --onedir --windowed --name "BatchEmailSender" main.py
       - run: cd dist && zip -r BatchEmailSender-macOS.zip BatchEmailSender.app
       - uses: actions/upload-artifact@v4
         with:
@@ -46,18 +42,12 @@ jobs:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
-        with:
-          name: BatchEmailSender-Windows
-          path: ./
-      - uses: actions/download-artifact@v4
-        with:
-          name: BatchEmailSender-macOS
-          path: ./
       - uses: softprops/action-gh-release@v1
         with:
           files: |
-            BatchEmailSender.exe
-            BatchEmailSender-macOS.zip
+            BatchEmailSender-Windows/BatchEmailSender.exe
+            BatchEmailSender-macOS/BatchEmailSender-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

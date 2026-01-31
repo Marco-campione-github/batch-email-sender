@@ -34,4 +34,30 @@ jobs:
           python-version: '3.12'
       - run: python3 -m venv .venv
       - run: source .venv/bin/activate && pip install --upgrade pip
-      - run: source
+      - run: source .venv/bin/activate && pip install -r requirements.txt pyinstaller
+      - run: source .venv/bin/activate && pyinstaller --onedir --windowed --name "BatchEmailSender" main.py
+      - run: cd dist && zip -r BatchEmailSender-macOS.zip BatchEmailSender.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BatchEmailSender-macOS
+          path: dist/BatchEmailSender-macOS.zip
+
+  release:
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: BatchEmailSender-Windows
+          path: ./
+      - uses: actions/download-artifact@v4
+        with:
+          name: BatchEmailSender-macOS
+          path: ./
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            BatchEmailSender.exe
+            BatchEmailSender-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,12 +5,23 @@ from pathlib import Path
 def get_app_data_dir():
     """
     Get the application's data directory for storing user files.
-    This is separate from the source code directory.
+    This is separate from the source code directory and always writable.
     """
     if getattr(sys, 'frozen', False):
         # Running as PyInstaller bundle
-        # Use the directory containing the executable
-        return Path(sys.executable).parent
+        # Use platform-specific user data directory
+        if sys.platform == 'darwin':  # macOS
+            # Use ~/Library/Application Support/batch-email-sender
+            app_dir = Path.home() / "Library" / "Application Support" / "batch-email-sender"
+        elif sys.platform == 'win32':  # Windows
+            # Use %APPDATA%/batch-email-sender or next to executable
+            appdata = Path.home() / "AppData" / "Roaming" / "batch-email-sender"
+            app_dir = appdata if appdata.parent.exists() else Path(sys.executable).parent
+        else:  # Linux and others
+            app_dir = Path.home() / ".batch-email-sender"
+        
+        app_dir.mkdir(parents=True, exist_ok=True)
+        return app_dir
     else:
         # Running in development - use a hidden folder in user's home directory
         app_dir = Path.home() / ".batch-email-sender"

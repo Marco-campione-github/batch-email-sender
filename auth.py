@@ -6,7 +6,8 @@ from utils import get_data_path
 
 SCOPES = [
     "https://www.googleapis.com/auth/gmail.send",
-    "https://www.googleapis.com/auth/gmail.readonly"
+    "https://www.googleapis.com/auth/gmail.readonly",
+    "https://www.googleapis.com/auth/documents.readonly"
 ]
 TOKEN_FILE = get_data_path("token.pickle")
 CREDENTIALS_FILE = get_data_path("google-oauth-credentials.json")
@@ -38,6 +39,23 @@ def authenticate():
             pickle.dump(creds, token)
 
     return build("gmail", "v1", credentials=creds)
+
+
+def get_docs_service():
+    """
+    Returns a Google Docs API service object using existing credentials.
+    """
+    creds = None
+    
+    if TOKEN_FILE.exists():
+        with open(TOKEN_FILE, "rb") as token:
+            creds = pickle.load(token)
+    
+    if not creds or not creds.valid:
+        raise Exception("Not authenticated. Please authenticate first.")
+    
+    return build("docs", "v1", credentials=creds)
+
 
 def get_authenticated_user_email(service=None):
     """

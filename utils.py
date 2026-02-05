@@ -1,4 +1,5 @@
 import sys
+import json
 from pathlib import Path
 
 
@@ -57,3 +58,57 @@ def get_data_path(relative_path):
     in a dedicated app data directory.
     """
     return get_app_data_dir() / relative_path
+
+
+def save_cache(key, value):
+    """
+    Save a key-value pair to the app's cache file.
+    
+    Args:
+        key: The cache key (string)
+        value: The value to cache (must be JSON-serializable)
+    """
+    cache_file = get_data_path("app_cache.json")
+    
+    # Load existing cache
+    cache = {}
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'r') as f:
+                cache = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            cache = {}
+    
+    # Update cache
+    cache[key] = value
+    
+    # Save cache
+    try:
+        with open(cache_file, 'w') as f:
+            json.dump(cache, f, indent=2)
+    except IOError as e:
+        print(f"Failed to save cache: {e}")
+
+
+def load_cache(key, default=None):
+    """
+    Load a value from the app's cache file.
+    
+    Args:
+        key: The cache key (string)
+        default: Default value if key doesn't exist
+        
+    Returns:
+        The cached value or default if not found
+    """
+    cache_file = get_data_path("app_cache.json")
+    
+    if not cache_file.exists():
+        return default
+    
+    try:
+        with open(cache_file, 'r') as f:
+            cache = json.load(f)
+            return cache.get(key, default)
+    except (json.JSONDecodeError, IOError):
+        return default

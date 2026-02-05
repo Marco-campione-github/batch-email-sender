@@ -1,19 +1,14 @@
 import tkinter as tk
+import sv_ttk
+import darkdetect
 from ui import BulkMailerUI
 
 def main():
     root = tk.Tk()
     root.geometry("800x600")
     
-    # Apply Sun Valley theme matching system theme (lazy load)
-    try:
-        import sv_ttk
-        import darkdetect
-        theme = darkdetect.theme()
-        if theme:
-            sv_ttk.set_theme(theme)
-    except ImportError:
-        pass  # Continue without theme if not available
+    # Apply Sun Valley theme matching system theme
+    sv_ttk.set_theme(darkdetect.theme())
     
     BulkMailerUI(root)
     root.mainloop()

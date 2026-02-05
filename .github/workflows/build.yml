@@ -31,7 +31,7 @@ jobs:
     
     - name: Build Windows executable
       run: |
-        pyinstaller batch-email-sender.spec
+        pyinstaller --onefile --windowed --name batch-email-sender --exclude-module matplotlib --exclude-module numpy --exclude-module pandas --exclude-module scipy --exclude-module PIL main.py
     
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
@@ -58,7 +58,7 @@ jobs:
     
     - name: Build macOS app
       run: |
-        pyinstaller batch-email-sender.spec
+        pyinstaller --onedir --windowed --name batch-email-sender --exclude-module matplotlib --exclude-module numpy --exclude-module pandas --exclude-module scipy --exclude-module PIL main.py
     
     - name: Create DMG
       run: |

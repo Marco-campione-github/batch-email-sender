@@ -31,7 +31,7 @@ jobs:
     
     - name: Build Windows executable
       run: |
-        pyinstaller --onefile --windowed --name batch-email-sender main.py
+        pyinstaller batch-email-sender.spec
     
     - name: Upload Windows artifact
       uses: actions/upload-artifact@v4
@@ -58,7 +58,7 @@ jobs:
     
     - name: Build macOS app
       run: |
-        pyinstaller --onedir --windowed --name batch-email-sender main.py
+        pyinstaller batch-email-sender.spec
     
     - name: Create DMG
       run: |

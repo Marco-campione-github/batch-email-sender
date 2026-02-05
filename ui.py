@@ -3,8 +3,6 @@ from tkinter import messagebox, scrolledtext, ttk, filedialog
 import threading
 import shutil
 import re
-import sv_ttk
-import darkdetect
 
 from auth import authenticate, is_authenticated, get_authenticated_user_email, TOKEN_FILE, credentials_file_exists, CREDENTIALS_FILE
 from email_service import send_email
@@ -425,13 +423,19 @@ class BulkMailerUI:
         # Save preference
         save_cache("theme_preference", selected_theme)
         
-        # Apply theme
-        if selected_theme == "System":
-            theme = darkdetect.theme()  # Returns "dark" or "light"
-            if theme:
-                sv_ttk.set_theme(theme)
-        else:
-            sv_ttk.set_theme(selected_theme.lower())
+        # Apply theme (lazy load)
+        try:
+            import sv_ttk
+            import darkdetect
+            
+            if selected_theme == "System":
+                theme = darkdetect.theme()  # Returns "dark" or "light"
+                if theme:
+                    sv_ttk.set_theme(theme)
+            else:
+                sv_ttk.set_theme(selected_theme.lower())
+        except ImportError:
+            pass
         
         # Remove focus and clear selection from combobox
         self.theme_combo.selection_clear()
